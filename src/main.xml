@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<program xmlns="http://www.kinoma.com/kpr/1">
+    <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <!-- ASSETS -->
+    <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+    <skin id="whiteSkin" color="white" />
+    <skin id="maskSkin" color="#7f000000" />
+
+    <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <!-- STYLES -->
+    <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+    <style id="locationStyle" font="bold 36px" color="white"
+        align="center,middle">
+        <margins top="5" bottom="5" />
+    </style>
+    <style id="temperatureStyle" font="bold 144px" color="#555"
+        align="center,middle" />
+    <style id="attributionLinkStyle" font="24px">
+        <margins bottom="5" />
+        <states colors="blue,#40007f" />
+    </style>
+
+    <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+    <!-- LAYOUTS -->
+    <!-- ++++++++++++++++++++++++++++++++++++++++++++++++++ -->
+
+    <picture id="BusyPicture" url="'./assets/waiting-black.png'">
+        <behavior>
+            <method id="onLoaded" params="picture"><![CDATA[
+				picture.origin = { x:picture.width >> 1, y:picture.height >> 1 };
+				picture.scale = { x:0.75, y:0.75 };
+				picture.rotation = 0;
+				picture.start();
+			]]></method>
+            <method id="onTimeChanged" params="picture"><![CDATA[
+				var rotation = picture.rotation;
+				rotation -= 1;
+				if ( rotation < 0 ) rotation = 360;
+				picture.rotation = rotation;
+			]]></method>
+        </behavior>
+    </picture>
+
+    <container id="MainContainer" left="0" right="0" top="0"
+        bottom="0" skin="whiteSkin" active="true">
+        <behavior>
+            <method id="onCreate" params="container, data"><![CDATA[
+				container.add( new BusyPicture );
+				var uri = "http://api.openweathermap.org/data/2.5/weather?" +
+					serializeQuery({
+						q: data.location,
+						mode: "xml",
+						units: "imperial"
+					});
+				container.invoke( new Message( uri ), Message.DOM );
+			]]></method>
+            <method id="onComplete" params="container, message, document"><![CDATA[
+				container.remove( container.last );
+				if ( document ) {
+					var items, node, value;
+					items = document.getElementsByTagName( "weather" );
+					if ( items.length > 0 ) {
+						node = items.item( 0 );
+						value = node.getAttribute( "number" );
+						if(value >= 500 & value < 550) var x = 0;//rain;
+						if(value == 800 & value == 801) var x = 1;//fine;
+						if(value == 802 & value == 803 && value == 804) var x = 2;//cloud;	
+						var weather = node.getAttribute("value");
+						trace(weather);			
+					}
+				}
+			]]></method>
+        </behavior>
+    </container>
+
+    <script>
+        <![CDATA[
+            var data = {
+			location: "Paris",
+			attribution: "openweathermap.org"
+		};
+		application.add( new MainContainer( data ) );
+        ]]>
+    </script>
+</program>
